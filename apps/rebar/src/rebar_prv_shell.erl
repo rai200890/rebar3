@@ -215,9 +215,16 @@ kill_old_user() ->
     %% fully die
     [P] = [P || P <- element(2,process_info(whereis(user), links)), is_port(P)],
     user ! {'EXIT', P, normal}, % pretend the port died, then the port can die!
-    exit(P, kill),
+    exit_signal(P, kill),
     wait_for_port_death(1000, P),
     OldUser.
+
+%% exit_signal/2 exists since OTP 29; exit/2 is deprecated from OTP 30.
+-if(?OTP_RELEASE >= 29).
+exit_signal(Dest, Reason) -> erlang:exit_signal(Dest, Reason).
+-else.
+exit_signal(Dest, Reason) -> exit(Dest, Reason).
+-endif.
 
 wait_for_port_death(N, _) when N < 0 ->
     %% This risks displaying a warning!

@@ -247,7 +247,7 @@ collect(_Tag, _Next, _N, Pool, _Join, _Done, Joined) ->
 
 %% Kills the workers, waits until they are gone and discards their messages.
 stop(Tag, Pool) ->
-    _ = [exit(Pid, kill) || Pid <- maps:keys(Pool)],
+    _ = [exit_signal(Pid, kill) || Pid <- maps:keys(Pool)],
     _ = [
         receive
             {'DOWN', MRef, process, Pid, _} -> ok
@@ -255,6 +255,13 @@ stop(Tag, Pool) ->
      || {Pid, MRef} <- maps:to_list(Pool)
     ],
     discard(Tag).
+
+%% exit_signal/2 exists since OTP 29; exit/2 is deprecated from OTP 30.
+-if(?OTP_RELEASE >= 29).
+exit_signal(Dest, Reason) -> erlang:exit_signal(Dest, Reason).
+-else.
+exit_signal(Dest, Reason) -> exit(Dest, Reason).
+-endif.
 
 discard(Tag) ->
     receive

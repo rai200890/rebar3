@@ -225,10 +225,17 @@ terminate(_State=#state{handlers=Handlers, sasl_reset=SReset,
     %% Kill the named process signifying this is running
     unlink(Pid),
     Ref = erlang:monitor(process, Pid),
-    exit(Pid, shutdown),
+    exit_signal(Pid, shutdown),
     receive
         {'DOWN', Ref, process, Pid, shutdown} -> ok
     end.
+
+%% exit_signal/2 exists since OTP 29; exit/2 is deprecated from OTP 30.
+-if(?OTP_RELEASE >= 29).
+exit_signal(Dest, Reason) -> erlang:exit_signal(Dest, Reason).
+-else.
+exit_signal(Dest, Reason) -> exit(Dest, Reason).
+-endif.
 
 %%%%%%%%%%%%% ERROR_LOGGER HANDLER %%%%%%%%%%%%
 

@@ -879,12 +879,19 @@ delete_running(Pid, [R|Running], Acc) ->
 
 handle_error(BadPid, Reason, Pids) ->
     lists:foreach(fun (Pid) ->
-                          erlang:exit(Pid, siblingdied)
+                          exit_signal(Pid, siblingdied)
                   end, Pids),
     lists:foreach(fun (Pid) ->
                           error_cleanup(Pid, BadPid)
                   end, Pids),
     erlang:exit(Reason).
+
+%% exit_signal/2 exists since OTP 29; exit/2 is deprecated from OTP 30.
+-if(?OTP_RELEASE >= 29).
+exit_signal(Dest, Reason) -> erlang:exit_signal(Dest, Reason).
+-else.
+exit_signal(Dest, Reason) -> exit(Dest, Reason).
+-endif.
 
 error_cleanup(BadPid, BadPid) ->
     ok;

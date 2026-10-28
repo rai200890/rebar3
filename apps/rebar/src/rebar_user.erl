@@ -101,7 +101,7 @@ catch_loop(Port, Shell) ->
 catch_loop(Port, Shell, Q) ->
     case catch server_loop(Port, Q) of
 	new_shell ->
-	    exit(Shell, kill),
+	    exit_signal(Shell, kill),
 	    catch_loop(Port, start_new_shell());
 	{unknown_exit,{Shell,Reason},_} ->		 % shell has exited
 	    case Reason of
@@ -117,6 +117,13 @@ catch_loop(Port, Shell, Q) ->
 	{'EXIT',R} ->
 	    exit(R)
     end.
+
+%% exit_signal/2 exists since OTP 29; exit/2 is deprecated from OTP 30.
+-if(?OTP_RELEASE >= 29).
+exit_signal(Dest, Reason) -> erlang:exit_signal(Dest, Reason).
+-else.
+exit_signal(Dest, Reason) -> exit(Dest, Reason).
+-endif.
 
 link_and_save_shell(Shell) ->
     link(Shell),
